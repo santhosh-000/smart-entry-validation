@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Transport Validation</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#f0f4f8; color:#333; overflow-x:hidden; }
+    header { background:#007bff; color:#fff; padding:20px; text-align:left; position:sticky; top:0; z-index:1000; } 
+    header h1 { margin:0; font-size:26px; }
+    header p { margin:5px 0 0; }
+
+    #profileIcon {
+      position:absolute; top:30px; right:20px;
+      background:white; color:#007bff; border-radius:8px;
+      width:45px; height:45px; display:flex; align-items:center;
+      justify-content:center; font-weight:bold; cursor:pointer;
+      display:none; font-size:20px;
+      transition:background 0.3s;
+    }
+    #profileIcon:hover { background:#e6f0ff; }
+
+    .container { padding:20px; max-width:900px; margin:auto; }
+    .intro, .org-details { background:white; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:20px; }
+    .intro h2, .org-details h2 { color:#007bff; margin-top:0; }
+    .intro img { display:block; margin:0 auto 15px; border-radius:8px; width:100%; max-width:1000px; aspect-ratio:1000/300; object-fit:cover; }
+    .org-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+    .org-item { background:#f9fbfd; padding:15px; border-radius:8px; border:1px solid #e2e6ea; }
+    .org-item strong { color:#007bff; display:block; margin-bottom:6px; }
+    .actions { text-align:center; margin-top:20px; }
+    .actions button { padding:12px 20px; margin:10px; border-radius:8px; font-weight:bold; border:none; cursor:pointer; }
+    .btn-primary { background:#007bff; color:white; }
+    .btn-secondary { background:#28a745; color:white; }
+
+    #profilePopup {
+      position:fixed;
+      top:0;
+      right:-320px;
+      height:100%;
+      width:280px;
+      background:white;
+      border-left:2px solid #007bff;
+      box-shadow:-4px 0 10px rgba(0,0,0,0.2);
+      padding:20px;
+      transition:right 0.4s ease, opacity 0.4s ease;
+      z-index:2000;
+      visibility:hidden;
+      opacity:0;
+    }
+    #profilePopup.active {
+      right:0;
+      visibility:visible;
+      opacity:1;
+    }
+    #profilePopup h3 { margin-top:0; color:#007bff; }
+    #profilePopup button {
+      width:100%; padding:10px;
+      border:none; border-radius:6px;
+      background:#dc3545; color:white;
+      cursor:pointer; font-weight:bold;
+    }
+
+    #qrCode canvas { margin-top:15px; width: 100%; }
+    #registerForm, #loginForm {
+      display:none;
+      margin-top:20px;
+      background:white; padding:20px;
+      border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.2);
+    }
+    #registerForm input, #registerForm select,
+    #loginForm input { width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:6px; }
+    .password-field { position: relative; }
+    .toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; color: #007bff; }
+    #registerForm button, #loginForm button { padding:10px 20px; border:none; border-radius:6px; background:#007bff; color:white; font-weight:bold; cursor:pointer; }
+
+    .org-details { margin-bottom:60px; }
+
+    footer { text-align:center; padding:15px; background:#eee; margin-top:30px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="orgName">Smart Transport Validation System</h1>
+    <p id="orgTagline">For Colleges, Offices & Industries</p>
+    <div id="profileIcon">👤</div>
+  </header>
+
+  <div class="container">
+    <div class="intro">
+      <img id="welcomeLogo" src="" alt="Organization Logo" />
+      <h2>Welcome!</h2>
+      <p id="welcomeDescription">
+        This system helps organizations manage their daily bus or transport validation easily. 
+        Students, staff, or employees can register, generate QR, and admins can scan & track attendance with ease.
+      </p>
+      <p><strong>Note:</strong> Organization details are editable via the Admin Panel.</p>
+    </div>
+
+    <div class="actions" id="actionArea">
+      <button class="btn-primary" id="registerBtn">Register</button>
+      <button class="btn-secondary" id="loginBtn">Login</button>
+    </div>
+
+    <form id="registerForm">
+      <h3>Register Now</h3>
+      <input type="text" id="name" placeholder="Enter Name" required />
+      <input type="text" id="idNumber" placeholder="Enter Roll/Employee ID" required />
+      <input type="text" id="bus" placeholder="Enter Bus Number" required />
+      <div class="password-field">
+        <input type="password" id="password" placeholder="Enter Password" required />
+        <span class="toggle-password" id="toggleRegPwd">👁️</span>
+      </div>
+      <select id="role" required>
+        <option value="">Select One</option>
+        <option value="user">User</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button type="submit">Submit</button>
+    </form>
+
+    <form id="loginForm">
+      <h3>Login</h3>
+      <input type="text" id="loginId" placeholder="Enter ID" required />
+      <div class="password-field">
+        <input type="password" id="loginPassword" placeholder="Enter Password" required />
+        <span class="toggle-password" id="toggleLoginPwd">👁️</span>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+
+  <div class="org-details">
+    <h2>Organization Details</h2>
+    <div class="org-grid">
+      <div class="org-item"><strong>College / Company Name</strong><span id="orgDisplayName">ABC College of Engineering</span></div>
+      <div class="org-item"><strong>Location</strong><span id="orgDisplayLocation">Madurai, Tamil Nadu</span></div>
+      <div class="org-item"><strong>Contact Number</strong><span id="orgDisplayContact">+91 98765 43210</span></div>
+      <div class="org-item"><strong>Email</strong><span id="orgDisplayEmail">info@abccollege.edu</span></div>
+      <div class="org-item"><strong>Bus Capacity</strong><span id="orgDisplayCapacity">45 Students + 4 Staff + 1 Driver</span></div>
+      <div class="org-item"><strong>Daily Trips</strong><span id="orgDisplayTrips">Morning & Evening</span></div>
+    </div>
+  </div>
+
+  <div id="profilePopup"></div>
+
+  <footer>
+    <p id="orgFooter">© 2025 Smart Transport Validation | Powered by Your Organization</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const registerBtn = document.getElementById("registerBtn");
+      const loginBtn = document.getElementById("loginBtn");
+      const registerForm = document.getElementById("registerForm");
+      const loginForm = document.getElementById("loginForm");
+      const actionArea = document.getElementById("actionArea");
+      const profileIcon = document.getElementById("profileIcon");
+      const profilePopup = document.getElementById("profilePopup");
+      const welcomeDescription = document.getElementById("welcomeDescription");
+
+      const orgNameEl = document.getElementById("orgName");
+      const orgTaglineEl = document.getElementById("orgTagline");
+      const orgFooterEl = document.getElementById("orgFooter");
+      const orgDisplayName = document.getElementById("orgDisplayName");
+      const orgDisplayLocation = document.getElementById("orgDisplayLocation");
+      const orgDisplayContact = document.getElementById("orgDisplayContact");
+      const orgDisplayEmail = document.getElementById("orgDisplayEmail");
+      const orgDisplayCapacity = document.getElementById("orgDisplayCapacity");
+      const orgDisplayTrips = document.getElementById("orgDisplayTrips");
+      const welcomeLogo = document.getElementById("welcomeLogo");
+
+      const defaultOrg = {
+        name: "ABC College of Engineering",
+        tagline: "For Colleges, Offices & Industries",
+        location: "Madurai, Tamil Nadu",
+        contact: "+91 98765 43210",
+        email: "info@abccollege.edu",
+        capacity: "45 Students + 4 Staff + 1 Driver",
+        trips: "Morning & Evening",
+        footer: "© 2025 Smart Transport Validation | Powered by Your Organization",
+        image: "",
+        description: "This system helps organizations manage their daily bus or transport validation easily. Students, staff, or employees can register, generate QR, and admins can scan & track attendance with ease."
+      };
+
+      const orgData = JSON.parse(localStorage.getItem("orgData")) || defaultOrg;
+
+      function renderOrgDetails(data){
+        orgNameEl.textContent = data.name;
+        orgTaglineEl.textContent = data.tagline;
+        orgFooterEl.textContent = data.footer;
+        orgDisplayName.textContent = data.name;
+        orgDisplayLocation.textContent = data.location;
+        orgDisplayContact.textContent = data.contact;
+        orgDisplayEmail.textContent = data.email;
+        orgDisplayCapacity.textContent = data.capacity;
+        orgDisplayTrips.textContent = data.trips;
+        welcomeDescription.textContent = data.description;
+        if(data.image){ welcomeLogo.src = data.image; } else { welcomeLogo.src = ""; }
+      }
+
+      renderOrgDetails(orgData);
+
+      let userData = null;
+      const storedUser = localStorage.getItem("busUser");
+      if(storedUser){
+        try{ userData = JSON.parse(storedUser); } 
+        catch(e){ localStorage.removeItem("busUser"); console.error(e); }
+      }
+
+      function showProfileUI(user){
+        profileIcon.style.display="flex";
+        profilePopup.innerHTML=`
+          <h3>${user.name}</h3>
+          <p><strong>Role:</strong> ${user.role}</p>
+          <p><strong>ID:</strong> ${user.userId}</p>
+          <p><strong>Bus:</strong> ${user.bus||"N/A"}</p>
+          <button id="logoutBtn">Logout</button>
+        `;
+        document.getElementById("logoutBtn").addEventListener("click", ()=>{
+          localStorage.removeItem("busUser");
+          localStorage.removeItem("adminId");
+          location.reload();
+        });
+
+        actionArea.innerHTML="";
+        if(user.role==="user"){
+          let qrDiv=document.createElement("div"); qrDiv.id="qrCode"; actionArea.appendChild(qrDiv);
+          let canvas=document.createElement("canvas"); qrDiv.appendChild(canvas);
+          QRCode.toCanvas(canvas, JSON.stringify({userId:user.userId,name:user.name,bus:user.bus,role:user.role}),(err)=>{if(err)console.error(err);});
+        }
+        else if(user.role==="admin"){
+          localStorage.setItem("adminId", user.userId);
+          let scanBtn=document.createElement("button"); 
+          scanBtn.className="btn-secondary"; 
+          scanBtn.innerText="Open Scanner";
+          scanBtn.addEventListener("click", ()=>window.location.href="qrscanner.html");
+          actionArea.appendChild(scanBtn);
+
+          let panelBtn=document.createElement("button");
+          panelBtn.className="btn-primary";
+          panelBtn.innerText="Admin Panel";
+          panelBtn.addEventListener("click", ()=>window.location.href="admin.html");
+          actionArea.appendChild(panelBtn);
+        }
+      }
+
+      if(userData) showProfileUI(userData);
+
+      registerBtn.addEventListener("click", ()=>{ registerForm.style.display=registerForm.style.display==="block"?"none":"block"; loginForm.style.display="none"; });
+      loginBtn.addEventListener("click", ()=>{ loginForm.style.display=loginForm.style.display==="block"?"none":"block"; registerForm.style.display="none"; });
+
+      document.getElementById("toggleRegPwd").addEventListener("click", ()=>{ const pwd=document.getElementById("password"); pwd.type=pwd.type==="password"?"text":"password"; });
+      document.getElementById("toggleLoginPwd").addEventListener("click", ()=>{ const pwd=document.getElementById("loginPassword"); pwd.type=pwd.type==="password"?"text":"password"; });
+
+      registerForm.addEventListener("submit", async (e)=>{
+        e.preventDefault();
+        let name=document.getElementById("name").value;
+        let userId=document.getElementById("idNumber").value;
+        let bus=document.getElementById("bus").value;
+        let password=document.getElementById("password").value;
+        let role=document.getElementById("role").value;
+        if(!name||!userId||!password||!role) return alert("Fill all fields");
+
+// "http://localhost:5000/api/users/register"
+
+
+        try{
+          const res=await fetch("http://localhost:5000/api/users/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,userId,bus,password,role})});
+          const data=await res.json();
+          if(res.ok) alert("Registered successfully!"); else alert("Registration failed: "+(data.message||"Unknown error"));
+        }catch(err){ console.error(err); alert("Server error! Check backend connection."); }
+
+        let user={name,userId,bus,role}; localStorage.setItem("busUser",JSON.stringify(user));
+        if(role==="admin") localStorage.setItem("adminId",userId);
+        registerForm.style.display="none"; showProfileUI(user);
+      });
+
+      loginForm.addEventListener("submit", async (e)=>{
+        e.preventDefault();
+        const userId=document.getElementById("loginId").value;
+        const password=document.getElementById("loginPassword").value;
+        if(!userId||!password) return alert("Please fill all fields");
+
+        try{
+          const res=await fetch("http://localhost:5000/api/users/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,password})});
+          const data=await res.json();
+          if(res.ok){
+            alert("Login successful!"); localStorage.setItem("busUser",JSON.stringify(data));
+            if(data.role==="admin") localStorage.setItem("adminId",data.userId);
+            loginForm.style.display="none"; showProfileUI(data);
+          }else alert("Login failed: "+(data.message||"Invalid credentials"));
+        }catch(err){ console.error(err); alert("Server error! Check backend connection."); }
+      });
+
+      /* ✅ Toggle open/close on click */
+      profileIcon.addEventListener("click", ()=>{
+        if(profilePopup.classList.contains("active")){
+          profilePopup.classList.remove("active");
+        } else {
+          // clear any inline styles to allow reopening properly
+          profilePopup.style.right = "";
+          profilePopup.style.opacity = "";
+          profilePopup.classList.add("active");
+        }
+      });
+
+      /* ✅ Smooth close when clicking empty space */
+      document.addEventListener("click", (e)=>{
+        const isClickInsidePopup = profilePopup.contains(e.target);
+        const isClickOnIcon = profileIcon.contains(e.target);
+        if(!isClickInsidePopup && !isClickOnIcon && profilePopup.classList.contains("active")){
+          profilePopup.style.right = "-320px";
+          profilePopup.style.opacity = "0";
+          setTimeout(()=>{
+            profilePopup.classList.remove("active");
+            // 🔧 fix: reset inline styles for next open
+            profilePopup.style.right = "";
+            profilePopup.style.opacity = "";
+          }, 400);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

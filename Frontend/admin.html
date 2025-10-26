@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel - Smart Transport Validation</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#f0f4f8; color:#333; }
+    header { background:#007bff; color:white; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-size:20px; }
+    #logoutBtn { padding:6px 12px; border:none; border-radius:6px; background:#dc3545; color:white; cursor:pointer; }
+
+    .container { padding:20px; max-width:1000px; margin:auto; }
+    h2 { color:#007bff; margin-bottom:15px; }
+
+    table { width:100%; border-collapse:collapse; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:30px; }
+    th, td { padding:12px; text-align:left; border-bottom:1px solid #ddd; }
+    th { background:#007bff; color:white; }
+
+    .attendance-btn { padding:6px 12px; border:none; border-radius:6px; cursor:pointer; }
+    .present { background:#28a745; color:white; }
+    .absent { background:#dc3545; color:white; }
+
+    .summary { margin-top:20px; background:white; padding:15px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+
+    .org-edit { margin-bottom:20px; background:white; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .org-edit input, .org-edit textarea { width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:6px; }
+    .org-edit button { padding:10px 15px; border:none; border-radius:6px; background:#007bff; color:white; cursor:pointer; font-weight:bold; }
+
+    .org-image-preview { text-align:center; margin-bottom:15px; }
+    .org-image-preview img { width:100%; max-width:1000px; aspect-ratio:1000/300; object-fit:cover; border-radius:8px; border:1px solid #ccc; }
+
+    .section-title { margin-top:30px; margin-bottom:15px; color:#007bff; font-size:18px; font-weight:bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Admin Panel</h1>
+    <button id="logoutBtn">Logout</button>
+  </header>
+
+  <div class="container">
+    <div class="section-title">Student Attendance</div>
+    <table id="attendanceTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>ID</th>
+          <th>Bus</th>
+          <th>Role</th>
+          <th>Attendance</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="summary">
+      <h3>Today's Summary</h3>
+      <p>Total Students: <span id="totalStudents">0</span></p>
+      <p>Present: <span id="presentCount">0</span></p>
+      <p>Absent: <span id="absentCount">0</span></p>
+    </div>
+
+    <div class="org-edit">
+      <h2>Edit Organization Details</h2>
+      <div class="org-image-preview" id="orgImagePreview"></div>
+      <input type="file" id="orgImageUpload" accept="image/*" />
+
+      <input type="text" id="editOrgName" placeholder="College / Company Name" />
+      <input type="text" id="editOrgTagline" placeholder="Tagline" />
+      <input type="text" id="editOrgLocation" placeholder="Location" />
+      <input type="text" id="editOrgContact" placeholder="Contact Number" />
+      <input type="email" id="editOrgEmail" placeholder="Email" />
+      <input type="text" id="editOrgCapacity" placeholder="Bus Capacity" />
+      <input type="text" id="editOrgTrips" placeholder="Daily Trips" />
+      <input type="text" id="editOrgFooter" placeholder="Footer Text" />
+
+      <!-- 🆕 Description field for index page -->
+      <textarea id="editOrgDescription" placeholder="Home Page Description (will appear below Welcome section)" rows="4"></textarea>
+
+      <button id="saveOrgBtn">Save Changes</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:5000";
+    const currentUser = JSON.parse(localStorage.getItem("busUser"));
+
+    if (!currentUser || currentUser.role !== "admin") {
+      alert("Access denied! Admins only.");
+      window.location.href = "index.html";
+    }
+
+    const logoutBtn = document.getElementById("logoutBtn");
+    const attendanceTable = document.getElementById("attendanceTable").querySelector("tbody");
+    const totalStudentsSpan = document.getElementById("totalStudents");
+    const presentCountSpan = document.getElementById("presentCount");
+    const absentCountSpan = document.getElementById("absentCount");
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("busUser");
+      window.location.href = "index.html";
+    });
+
+    // Organization Edit Section
+    const orgFields = {
+      name: document.getElementById("editOrgName"),
+      tagline: document.getElementById("editOrgTagline"),
+      location: document.getElementById("editOrgLocation"),
+      contact: document.getElementById("editOrgContact"),
+      email: document.getElementById("editOrgEmail"),
+      capacity: document.getElementById("editOrgCapacity"),
+      trips: document.getElementById("editOrgTrips"),
+      footer: document.getElementById("editOrgFooter"),
+      description: document.getElementById("editOrgDescription")
+    };
+    const saveOrgBtn = document.getElementById("saveOrgBtn");
+    const orgImageUpload = document.getElementById("orgImageUpload");
+    const orgImagePreview = document.getElementById("orgImagePreview");
+
+    const defaultOrg = {
+      name: "ABC College of Engineering",
+      tagline: "For Colleges, Offices & Industries",
+      location: "Madurai, Tamil Nadu",
+      contact: "+91 98765 43210",
+      email: "info@abccollege.edu",
+      capacity: "45 Students + 4 Staff + 1 Driver",
+      trips: "Morning & Evening",
+      footer: "© 2025 Smart Transport Validation | Powered by Your Organization",
+      description: "Our Smart Entry system ensures safe and efficient transport validation for colleges and companies.",
+      image: ""
+    };
+
+    let orgData = JSON.parse(localStorage.getItem("orgData")) || defaultOrg;
+
+    function loadOrgFields() {
+      orgFields.name.value = orgData.name;
+      orgFields.tagline.value = orgData.tagline;
+      orgFields.location.value = orgData.location;
+      orgFields.contact.value = orgData.contact;
+      orgFields.email.value = orgData.email;
+      orgFields.capacity.value = orgData.capacity;
+      orgFields.trips.value = orgData.trips;
+      orgFields.footer.value = orgData.footer;
+      orgFields.description.value = orgData.description;
+
+      if(orgData.image){
+        orgImagePreview.innerHTML = `<img src="${orgData.image}" alt="Organization Image" />`;
+      } else {
+        orgImagePreview.innerHTML = "";
+      }
+    }
+
+    orgImageUpload.addEventListener("change", () => {
+      const file = orgImageUpload.files[0];
+      if(file && file.size <= 10*1024*1024){ // ✅ 10MB limit
+        const reader = new FileReader();
+        reader.onload = function(e){
+          orgData.image = e.target.result;
+          orgImagePreview.innerHTML = `<img src="${orgData.image}" alt="Organization Image" />`;
+        }
+        reader.readAsDataURL(file);
+      } else {
+        alert("File too large! Max 10MB allowed.");
+      }
+    });
+
+    saveOrgBtn.addEventListener("click", () => {
+      orgData = {
+        name: orgFields.name.value || defaultOrg.name,
+        tagline: orgFields.tagline.value || defaultOrg.tagline,
+        location: orgFields.location.value || defaultOrg.location,
+        contact: orgFields.contact.value || defaultOrg.contact,
+        email: orgFields.email.value || defaultOrg.email,
+        capacity: orgFields.capacity.value || defaultOrg.capacity,
+        trips: orgFields.trips.value || defaultOrg.trips,
+        footer: orgFields.footer.value || defaultOrg.footer,
+        description: orgFields.description.value || defaultOrg.description,
+        image: orgData.image || ""
+      };
+      localStorage.setItem("orgData", JSON.stringify(orgData));
+      alert("Organization details saved successfully!");
+    });
+
+    loadOrgFields();
+
+    // Fetch and render users (attendance table)
+    async function loadUsers() {
+      try {
+        attendanceTable.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>`;
+        const res = await fetch(`${API_BASE}/api/users/${currentUser.bus}`);
+        const allUsers = await res.json();
+        allUsers.forEach(u => { if(!u.attendance) u.attendance = "Absent"; });
+        renderTable(allUsers);
+      } catch (err) {
+        console.error(err);
+        alert("Error fetching users from server!");
+      }
+    }
+
+    function renderTable(allUsers) {
+      attendanceTable.innerHTML = "";
+      let presentCount = 0, absentCount = 0;
+
+      allUsers.forEach((user, index) => {
+        const tr = document.createElement("tr");
+        const isPresent = user.attendance === "Present";
+        tr.innerHTML = `
+          <td>${user.name}</td>
+          <td>${user.userId}</td>
+          <td>${user.bus}</td>
+          <td>${user.role}</td>
+          <td>
+            <button class="attendance-btn ${isPresent ? 'present' : 'absent'}" data-index="${index}">
+              ${isPresent ? 'Present' : 'Absent'}
+            </button>
+          </td>
+        `;
+        attendanceTable.appendChild(tr);
+
+        if (isPresent) presentCount++;
+        else absentCount++;
+      });
+
+      totalStudentsSpan.textContent = allUsers.length;
+      presentCountSpan.textContent = presentCount;
+      absentCountSpan.textContent = absentCount;
+
+      document.querySelectorAll(".attendance-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const i = btn.getAttribute("data-index");
+          const user = allUsers[i];
+          const newStatus = user.attendance === "Present" ? "Absent" : "Present";
+
+          try {
+            const res = await fetch(`${API_BASE}/api/users/${user.userId}/attendance`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: newStatus })
+            });
+
+            if(res.ok) {
+              user.attendance = newStatus;
+              renderTable(allUsers);
+            } else {
+              const data = await res.json();
+              alert(data.message || "Failed to update attendance!");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Error updating attendance!");
+          }
+        });
+      });
+    }
+
+    loadUsers();
+    setInterval(loadUsers, 30000);
+  </script>
+</body>
+</html>

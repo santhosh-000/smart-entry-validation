@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Scanner - Smart Entry</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align:center; padding:20px; background:#f0f4f8; }
+    video { width: 100%; max-width: 400px; border: 2px solid #007bff; border-radius: 8px; }
+    #result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    button#retry { margin-top: 15px; padding:8px 15px; font-size:16px; border:none; border-radius:6px; background:#007bff; color:white; cursor:pointer; display:none; }
+  </style>
+</head>
+<body>
+  <h1>QR Scanner</h1>
+  <video id="video" autoplay></video>
+  <div id="result">📷 Scanning...</div>
+  <button id="retry">🔄 Scan Again</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <script>
+    const video = document.getElementById("video");
+    const resultDiv = document.getElementById("result");
+    const retryBtn = document.getElementById("retry");
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    let scanning = false;
+
+    // Load admin info from localStorage
+    const adminUser = JSON.parse(localStorage.getItem("busUser"));
+    if (!adminUser || adminUser.role !== "admin") {
+      alert("Access denied! Admins only.");
+      window.location.href = "index.html";
+    }
+
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(stream => {
+          video.srcObject = stream;
+          video.setAttribute("playsinline", true);
+          scanning = true;
+          retryBtn.style.display = "none";
+          requestAnimationFrame(scanFrame);
+        })
+        .catch(err => {
+          resultDiv.textContent = "Error accessing camera: " + err;
+          resultDiv.style.color = "red";
+        });
+    }
+
+    function stopCamera() {
+      if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
+      scanning = false;
+    }
+
+    function scanFrame() {
+      if (!scanning) return;
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+        if (code) {
+          stopCamera();
+
+          let scannedData;
+          try { scannedData = JSON.parse(code.data); }
+          catch {
+            resultDiv.textContent = "❌ Invalid QR format";
+            resultDiv.style.color = "red";
+            retryBtn.style.display = "inline-block";
+            return;
+          }
+
+          if (scannedData.bus !== adminUser.bus) {
+            resultDiv.textContent = `❌ Invalid user (Different bus: ${scannedData.bus})`;
+            resultDiv.style.color = "red";
+            retryBtn.style.display = "inline-block";
+            return;
+          }
+
+          // ✅ Corrected field: use scannedData.userId
+          const payload = {
+            scannedData: {
+              userId: scannedData.userId,
+              name: scannedData.name,
+              bus: scannedData.bus,
+              role: scannedData.role
+            },
+            adminBus: adminUser.bus
+          };
+
+          fetch("http://localhost:5000/api/qr/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.message.toLowerCase().includes("valid")) {
+              resultDiv.textContent = `✅ ${scannedData.name} marked present ✅`;
+              resultDiv.style.color = "green";
+            } else {
+              resultDiv.textContent = `❌ ${data.message}`;
+              resultDiv.style.color = "red";
+            }
+            retryBtn.style.display = "inline-block";
+          })
+          .catch(err => {
+            console.error("Fetch error:", err);
+            resultDiv.textContent = "🚫 Server connection error";
+            resultDiv.style.color = "red";
+            retryBtn.style.display = "inline-block";
+          });
+
+          return;
+        }
+      }
+      requestAnimationFrame(scanFrame);
+    }
+
+    retryBtn.addEventListener("click", () => {
+      resultDiv.textContent = "📷 Scanning...";
+      resultDiv.style.color = "black";
+      startCamera();
+    });
+
+    startCamera();
+  </script>
+</body>
+</html>
