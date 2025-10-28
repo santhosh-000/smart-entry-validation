@@ -8,8 +8,8 @@ It eliminates the need for manual attendance or ID checks by providing a secure,
 This system plays a major role in school, college, or organizational transport systems — ensuring that only authorized users board the correct bus.
 
 🔗Site Link :https://smartentrysystem.netlify.app/
-
-
+```
+```
 🎯 PROJECT PURPOSE
 
 Traditional entry verification methods — like manual ID checks, name lists, or attendance sheets — are slow, inefficient, and error-prone.
@@ -26,8 +26,8 @@ The goal is to:
 📊 Keep digital attendance records automatically.
 
 🌐 Reduce paper-based administration.```
-
-
+```
+```
 🧩 SYSTEM ROLES AND STRUCTURE
 
 The application includes two main roles:
