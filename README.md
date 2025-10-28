@@ -234,11 +234,12 @@ Smart Entry Validation/
 ```
 
 
-👨‍💻 DEVLOPED BY:
+👨‍💻 DEVELOPER
 
-Santhosh Kumar. S
-Full Stack Developer 
-📍 Salem, Tamil Nadu, India.
+Developed by: Santhosh Kumar. S
+
+Role: Full Stack Developer 
+Project Type: Validation & Management System
 ```
 ```
 🏁 SUMMARY
