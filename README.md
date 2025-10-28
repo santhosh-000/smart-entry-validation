@@ -1,6 +1,6 @@
 Smart Entry Validation System
 
-Overview
+OVERVIEW
 
 The Smart Entry Validation System is a QR Code–based web application designed to automate and streamline the process of validating students or employees during bus or institutional entry.
 It eliminates the need for manual attendance or ID checks by providing a secure, automated, and paperless system where Admins can verify Users (Students) using a QR code scan.
@@ -9,8 +9,8 @@ This system plays a major role in school, college, or organizational transport s
 
 🔗Site Link :https://smartentrysystem.netlify.app/
 
-```
-🎯 Project Purpose
+
+🎯 PROJECT PURPOSE
 
 Traditional entry verification methods — like manual ID checks, name lists, or attendance sheets — are slow, inefficient, and error-prone.
 To address this, the Smart Entry Validation System introduces a modern digital validation method using unique QR codes and a simple admin-user model.
@@ -27,8 +27,8 @@ The goal is to:
 
 🌐 Reduce paper-based administration.```
 
-```
-🧩 System Roles and Structure
+
+🧩 SYSTEM ROLES AND STRUCTURE
 
 The application includes two main roles:
 
@@ -60,8 +60,8 @@ Access QR Scanner to validate users.
 
 View attendance and validation results.```
 
-```
-⚙️ How the System Works (Step-by-Step Workflow)
+
+⚙️ HOW THE SYSTEM WORKS (Step-by-Step Workflow)
 
 Let’s break down the full process 👇
 
@@ -154,7 +154,7 @@ The Admin can check daily attendance reports in their Admin Panel.
 
 Attendance is stored securely through backend APIs using MongoDB.
 
-This helps the Admin track which students were validated daily, reducing the need for manual attendance sheets.```
+This helps the Admin track which students were validated daily, reducing the need for manual attendance sheets.
 
 ```
 | Role    | Action                      | Output                               |
@@ -166,8 +166,8 @@ This helps the Admin track which students were validated daily, reducing the nee
 | Admin   | Views attendance            | List of all present students         |
 ```
 
-```
-💾 Data Flow Explanation
+
+💾 DATA FLOW EXPLANATION
 
 Frontend (User Interface)
 
@@ -189,7 +189,7 @@ Database (MongoDB)
 
 Stores registered users, admin data, and attendance logs.
 
-Each record includes ID, bus number, role, and timestamps for validation.```
+Each record includes ID, bus number, role, and timestamps for validation.
 
 ```
 | Layer              | Technologies Used                                |
@@ -233,16 +233,15 @@ Smart Entry Validation/
 | Database  | MongoDB Atlas    |
 ```
 
-```
-👨‍💻 Developed by:
+
+👨‍💻 DEVLOPED BY:
 
 Santhosh Kumar. S
 Full Stack Developer 
 📍 Salem, Tamil Nadu, India.
-```
 
-```
-🏁 Summary
+
+🏁 SUMMARY
 
 The Smart Entry Validation System offers a secure, modern, and automated approach to daily entry validation.
 By combining QR technology, admin control, and local + cloud storage, this system ensures:
@@ -251,7 +250,7 @@ By combining QR technology, admin control, and local + cloud storage, this syste
 ✅ Security
 ✅ Digital Record-Keeping
 
-It’s a perfect example of how simple technologies can create real-world impact in transportation and institutional management systems.```
+It’s a perfect example of how simple technologies can create real-world impact in transportation and institutional management systems.
 
 
 
