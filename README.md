@@ -239,7 +239,7 @@ Smart Entry Validation/
 Developed by: Santhosh Kumar. S
 
 Role: Full Stack Developer 
-Project Type: Validation & Management System
+|| Project Type: Validation & Management System
 
 
 ```
