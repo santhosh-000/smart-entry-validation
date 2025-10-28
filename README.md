@@ -59,8 +59,8 @@ Edit organization information.
 Access QR Scanner to validate users.
 
 View attendance and validation results.```
-
-
+```
+```
 ⚙️ HOW THE SYSTEM WORKS (Step-by-Step Workflow)
 
 Let’s break down the full process 👇
@@ -239,8 +239,8 @@ Smart Entry Validation/
 Santhosh Kumar. S
 Full Stack Developer 
 📍 Salem, Tamil Nadu, India.
-
-
+```
+```
 🏁 SUMMARY
 
 The Smart Entry Validation System offers a secure, modern, and automated approach to daily entry validation.
